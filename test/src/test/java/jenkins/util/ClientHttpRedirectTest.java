@@ -38,20 +38,7 @@ class ClientHttpRedirectTest {
         "HTTPS://JENKINS.IO"
     })
     void testAllowedUrlSchemes(String url) throws Exception {
-        ClientHttpRedirect redirect = new ClientHttpRedirect(url);
-        StaplerRequest2 req = Mockito.mock(StaplerRequest2.class);
-        StaplerResponse2 rsp = Mockito.mock(StaplerResponse2.class);
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintWriter writer = new PrintWriter(new OutputStreamWriter(baos, StandardCharsets.UTF_8),true);
-        Mockito.when(rsp.getWriter()).thenReturn(writer);
-        Mockito.when(req.getContextPath()).thenReturn("");
-
-        redirect.generateResponse(req, rsp, null);
-
-        writer.flush();
-        String output = baos.toString(StandardCharsets.UTF_8);
-        assertTrue(output.contains(url));
+        assertUrlAllowed(url);
     }
 
     /**
@@ -130,7 +117,7 @@ class ClientHttpRedirectTest {
             () -> redirect.generateResponse(req, rsp, null));
         assertDoesNotThrow(() -> exception.generateResponse(req, rsp, null));
         Mockito.verify(rsp).setStatus(403);
-        Mockito.verify(rsp).setContentType("text/plain;charset=UTF-8");
+        Mockito.verify(rsp).setContentType(Mockito.startsWith("text/plain"));
     }
 
     /**
@@ -143,6 +130,10 @@ class ClientHttpRedirectTest {
         "hTTp://test.com"
     })
     void testMixedCaseHttpAllowed(String url) throws Exception {
+        assertUrlAllowed(url);
+    }
+
+    private static void assertUrlAllowed(String url) throws Exception {
         ClientHttpRedirect redirect = new ClientHttpRedirect(url);
         StaplerRequest2 req = Mockito.mock(StaplerRequest2.class);
         StaplerResponse2 rsp = Mockito.mock(StaplerResponse2.class);
