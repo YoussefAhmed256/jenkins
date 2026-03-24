@@ -143,19 +143,7 @@ class ClientHttpRedirectTest {
         "hTTp://test.com"
     })
     void testMixedCaseHttpAllowed(String url) throws Exception {
-        ClientHttpRedirect redirect = new ClientHttpRedirect(url);
-        StaplerRequest2 req = Mockito.mock(StaplerRequest2.class);
-        StaplerResponse2 rsp = Mockito.mock(StaplerResponse2.class);
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintWriter writer = new PrintWriter(new OutputStreamWriter(baos, StandardCharsets.UTF_8), true);
-        Mockito.when(rsp.getWriter()).thenReturn(writer);
-        Mockito.when(req.getContextPath()).thenReturn("");
-
-        redirect.generateResponse(req, rsp, null);
-
-        writer.flush();
-        String output = baos.toString();
-        assertTrue(output.contains(url));
+        // Reuse the existing allowed-URL-schemes test logic for mixed-case HTTP/HTTPS URLs.
+        testAllowedUrlSchemes(url);
     }
 }
