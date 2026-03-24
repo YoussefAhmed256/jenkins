@@ -53,7 +53,7 @@ public record ClientHttpRedirect(@NonNull String redirectUrl) implements HttpRes
         Objects.requireNonNull(redirectUrl);
     }
 
-    private static boolean isSafeToRedirectTo(@NonNull String url) {
+    private static boolean isHttpOrHttpsOrRelative(@NonNull String url) {
         if (Util.isSafeToRedirectTo(url)) {
             return true;
         }
@@ -64,7 +64,7 @@ public record ClientHttpRedirect(@NonNull String redirectUrl) implements HttpRes
 
     @Override
     public void generateResponse(StaplerRequest2 req, StaplerResponse2 rsp, Object o) throws IOException, ServletException {
-        if (!isSafeToRedirectTo(redirectUrl)) {
+        if (!isHttpOrHttpsOrRelative(redirectUrl)) {
             throw hudson.util.HttpResponses.error(403,
                 "Unsafe redirect blocked: Jenkins only allows redirects to HTTP/HTTPS URLs or relative paths. "
                     + "Blocked URL: " + Util.escape(redirectUrl));
