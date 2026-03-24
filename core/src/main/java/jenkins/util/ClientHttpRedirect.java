@@ -79,7 +79,7 @@ public record ClientHttpRedirect(@NonNull String redirectUrl) implements HttpRes
     @Override
     public void generateResponse(StaplerRequest2 req, StaplerResponse2 rsp, Object o) throws IOException, ServletException {
         if (!isHttpOrHttpsOrRelative(redirectUrl)) {
-            throw hudson.util.HttpResponses.error(403,
+            throw hudson.util.HttpResponses.errorWithoutStack(403,
                 "Unsafe redirect blocked: Jenkins only allows redirects to HTTP/HTTPS URLs or relative paths. "
                     + "Blocked URL: " + sanitizeForError(redirectUrl));
         }
