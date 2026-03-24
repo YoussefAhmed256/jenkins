@@ -105,6 +105,17 @@ class ClientHttpRedirectTest {
         assertUrlBlockedWithForbidden(url);
     }
 
+    /**
+     * Test that scheme-relative and backslash-prefixed URLs are blocked.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "//attacker.example",
+        "\\\\attacker.example"
+    })
+    void testSchemeRelativeUrlsBlocked(String url) throws Exception {
+        assertUrlBlockedWithForbidden(url);
+    }
     private static void assertUrlBlockedWithForbidden(String url) throws Exception {
         ClientHttpRedirect redirect = new ClientHttpRedirect(url);
         StaplerRequest2 req = Mockito.mock(StaplerRequest2.class);
