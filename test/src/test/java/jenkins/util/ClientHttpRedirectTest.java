@@ -109,6 +109,9 @@ class ClientHttpRedirectTest {
         ClientHttpRedirect redirect = new ClientHttpRedirect(url);
         StaplerRequest2 req = Mockito.mock(StaplerRequest2.class);
         StaplerResponse2 rsp = Mockito.mock(StaplerResponse2.class);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(baos, StandardCharsets.UTF_8), true);
+        Mockito.when(rsp.getWriter()).thenReturn(writer);
 
         HttpResponses.HttpResponseException exception = assertThrows(HttpResponses.HttpResponseException.class,
             () -> redirect.generateResponse(req, rsp, null));
