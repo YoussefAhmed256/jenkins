@@ -8,7 +8,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -116,6 +115,7 @@ class ClientHttpRedirectTest {
     void testSchemeRelativeUrlsBlocked(String url) throws Exception {
         assertUrlBlockedWithForbidden(url);
     }
+
     private static void assertUrlBlockedWithForbidden(String url) throws Exception {
         ClientHttpRedirect redirect = new ClientHttpRedirect(url);
         StaplerRequest2 req = Mockito.mock(StaplerRequest2.class);
@@ -127,8 +127,7 @@ class ClientHttpRedirectTest {
         HttpResponses.HttpResponseException exception = assertThrows(HttpResponses.HttpResponseException.class,
             () -> redirect.generateResponse(req, rsp, null));
         assertDoesNotThrow(() -> exception.generateResponse(req, rsp, null));
-        Mockito.verify(rsp).setStatus(403);
-        Mockito.verify(rsp).setContentType(Mockito.startsWith("text/plain"));
+        Mockito.verify(rsp).sendError(Mockito.eq(403), Mockito.contains(url));
     }
 
     /**
