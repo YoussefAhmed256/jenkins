@@ -62,12 +62,26 @@ public record ClientHttpRedirect(@NonNull String redirectUrl) implements HttpRes
         return urlLower.startsWith("http://") || urlLower.startsWith("https://");
     }
 
+    private static @NonNull String sanitizeForError(@NonNull String url) {
+        StringBuilder sb = new StringBuilder(url.length());
+        for (int i = 0; i < url.length(); i++) {
+            char c = url.charAt(i);
+            // Keep printable characters and common whitespace, replace other control chars.
+            if (c >= 0x20 || c == '\r' || c == '\n' || c == '\t') {
+                sb.append(c);
+            } else {
+                sb.append('?');
+            }
+        }
+        return sb.toString();
+    }
+
     @Override
     public void generateResponse(StaplerRequest2 req, StaplerResponse2 rsp, Object o) throws IOException, ServletException {
         if (!isHttpOrHttpsOrRelative(redirectUrl)) {
             throw hudson.util.HttpResponses.error(403,
                 "Unsafe redirect blocked: Jenkins only allows redirects to HTTP/HTTPS URLs or relative paths. "
-                    + "Blocked URL: " + Util.escape(redirectUrl));
+                    + "Blocked URL: " + sanitizeForError(redirectUrl));
         }
 
         rsp.setContentType("text/html;charset=UTF-8");
