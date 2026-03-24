@@ -42,7 +42,7 @@ import org.kohsuke.stapler.StaplerResponse2;
  * <p>
  * For security reasons, only HTTP/HTTPS URLs and relative paths are allowed.
  * Attempts to redirect to other schemes (e.g., {@code javascript:}, {@code data:}, {@code file:})
- * will result in a security warning page instead of performing the redirect.
+ * will result in a 403 (Forbidden) error response instead of performing the redirect.
  * @see <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Content-Security-Policy/form-action">MDN documentation on form-action</a>
  * @see <a href="https://github.com/w3c/webappsec-csp/issues/8">Content Security Policy issue discussing this behavior</a>
  * @since 2.550

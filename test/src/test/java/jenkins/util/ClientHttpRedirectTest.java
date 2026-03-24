@@ -1,13 +1,18 @@
 package jenkins.util;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.kohsuke.stapler.HttpResponses;
 import org.kohsuke.stapler.StaplerRequest2;
 import org.kohsuke.stapler.StaplerResponse2;
 import org.mockito.Mockito;
@@ -38,8 +43,7 @@ class ClientHttpRedirectTest {
         StaplerResponse2 rsp = Mockito.mock(StaplerResponse2.class);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintWriter writer = new PrintWriter(baos);
-
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(baos, StandardCharsets.UTF_8),true);
         Mockito.when(rsp.getWriter()).thenReturn(writer);
         Mockito.when(req.getContextPath()).thenReturn("");
 
@@ -47,7 +51,7 @@ class ClientHttpRedirectTest {
 
         writer.flush();
         String output = baos.toString();
-        assertTrue(output.length() > 0);
+        assertTrue(output.contains(url));
     }
 
     /**
@@ -66,8 +70,7 @@ class ClientHttpRedirectTest {
         StaplerResponse2 rsp = Mockito.mock(StaplerResponse2.class);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintWriter writer = new PrintWriter(baos);
-
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(baos, StandardCharsets.UTF_8), true);
         Mockito.when(rsp.getWriter()).thenReturn(writer);
         Mockito.when(req.getContextPath()).thenReturn("");
 
@@ -75,46 +78,31 @@ class ClientHttpRedirectTest {
 
         writer.flush();
         String output = baos.toString();
-        assertTrue(output.length() > 0);
+        assertTrue(output.contains(url));
     }
 
     /**
      * Test that javascript: URLs are blocked.
      */
     @Test
-    void testJavaScriptUrlBlocked() {
-        ClientHttpRedirect redirect = new ClientHttpRedirect("javascript:alert('XSS')");
-        StaplerRequest2 req = Mockito.mock(StaplerRequest2.class);
-        StaplerResponse2 rsp = Mockito.mock(StaplerResponse2.class);
-
-        Exception exception = assertThrows(Exception.class, () -> redirect.generateResponse(req, rsp, null));
-        assertTrue(exception.getMessage().contains("Unsafe redirect blocked"));
+    void testJavaScriptUrlBlocked() throws Exception {
+        assertUrlBlockedWithForbidden("javascript:alert('XSS')");
     }
 
     /**
      * Test that data: URLs are blocked.
      */
     @Test
-    void testDataUrlBlocked() {
-        ClientHttpRedirect redirect = new ClientHttpRedirect("data:text/html,<script>alert('XSS')</script>");
-        StaplerRequest2 req = Mockito.mock(StaplerRequest2.class);
-        StaplerResponse2 rsp = Mockito.mock(StaplerResponse2.class);
-
-        Exception exception = assertThrows(Exception.class, () -> redirect.generateResponse(req, rsp, null));
-        assertTrue(exception.getMessage().contains("Unsafe redirect blocked"));
+    void testDataUrlBlocked() throws Exception {
+        assertUrlBlockedWithForbidden("data:text/html,<script>alert('XSS')</script>");
     }
 
     /**
      * Test that file: URLs are blocked.
      */
     @Test
-    void testFileUrlBlocked() {
-        ClientHttpRedirect redirect = new ClientHttpRedirect("file:///etc/passwd");
-        StaplerRequest2 req = Mockito.mock(StaplerRequest2.class);
-        StaplerResponse2 rsp = Mockito.mock(StaplerResponse2.class);
-
-        Exception exception = assertThrows(Exception.class, () -> redirect.generateResponse(req, rsp, null));
-        assertTrue(exception.getMessage().contains("Unsafe redirect blocked"));
+    void testFileUrlBlocked() throws Exception {
+        assertUrlBlockedWithForbidden("file:///etc/passwd");
     }
 
     /**
@@ -126,13 +114,23 @@ class ClientHttpRedirectTest {
         "ftp://server/file",
         "telnet://host:23"
     })
-    void testCustomSchemesBlocked(String url) {
+    void testCustomSchemesBlocked(String url) throws Exception {
+        assertUrlBlockedWithForbidden(url);
+    }
+
+    private static void assertUrlBlockedWithForbidden(String url) throws Exception {
         ClientHttpRedirect redirect = new ClientHttpRedirect(url);
         StaplerRequest2 req = Mockito.mock(StaplerRequest2.class);
         StaplerResponse2 rsp = Mockito.mock(StaplerResponse2.class);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(baos, StandardCharsets.UTF_8), true);
+        Mockito.when(rsp.getWriter()).thenReturn(writer);
 
-        Exception exception = assertThrows(Exception.class, () -> redirect.generateResponse(req, rsp, null));
-        assertTrue(exception.getMessage().contains("Unsafe redirect blocked"));
+        HttpResponses.HttpResponseException exception = assertThrows(HttpResponses.HttpResponseException.class,
+            () -> redirect.generateResponse(req, rsp, null));
+        assertDoesNotThrow(() -> exception.generateResponse(req, rsp, null));
+        Mockito.verify(rsp).setStatus(403);
+        Mockito.verify(rsp).setContentType("text/plain;charset=UTF-8");
     }
 
     /**
@@ -150,8 +148,7 @@ class ClientHttpRedirectTest {
         StaplerResponse2 rsp = Mockito.mock(StaplerResponse2.class);
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        PrintWriter writer = new PrintWriter(baos);
-
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(baos, StandardCharsets.UTF_8), true);
         Mockito.when(rsp.getWriter()).thenReturn(writer);
         Mockito.when(req.getContextPath()).thenReturn("");
 
@@ -159,6 +156,6 @@ class ClientHttpRedirectTest {
 
         writer.flush();
         String output = baos.toString();
-        assertTrue(output.length() > 0);
+        assertTrue(output.contains(url));
     }
 }
